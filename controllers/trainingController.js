@@ -130,7 +130,7 @@ exports.addChapter = async (req, res) => {
         description,
         duration,
         dependentChapter,
-        pdf: req.file.filename,
+        pdf: 'pdfs/' + req.file.filename, 
         mandatory: mandatory === 'true'  // 👈 boolean me convert kiya
       };
   
@@ -204,7 +204,8 @@ exports.replaceChapterPdf = async (req, res) => {
     }
 
     // ✅ Save new file name
-    chapter.pdf = req.file.filename;
+    chapter.pdf = 'pdfs/' + req.file.filename;
+
 
     await training.save();
 
@@ -229,11 +230,15 @@ exports.deleteChapter = async (req, res) => {
 
     // ✅ Delete PDF from uploads folder
     if (chapter.pdf) {
-      const filePath = path.join(__dirname, '../uploads', chapter.pdf);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      const fullPath = path.join(__dirname, '../uploads', chapter.pdf);
+      console.log('Deleting file at:', fullPath);  // debug line
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      } else {
+        console.warn('File not found at:', fullPath);
       }
     }
+    
 
     // ✅ Remove chapter from array
     training.chapters = training.chapters.filter((c) => c._id.toString() !== chapterId);

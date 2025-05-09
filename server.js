@@ -10,7 +10,8 @@ app.use(cors());
 
 
 const path = require('path');
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 // admin routes
 const adminRoutes = require('./routes/adminRoutes');
