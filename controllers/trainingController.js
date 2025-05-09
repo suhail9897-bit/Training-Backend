@@ -58,19 +58,32 @@ exports.getAllTrainings = async (req, res) => {
 
 // Delete a training by ID
 exports.deleteTraining = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const deletedTraining = await Training.findByIdAndDelete(id);
-  
-      if (!deletedTraining) {
-        return res.status(404).json({ message: 'Training not found' });
-      }
-  
-      res.status(200).json({ message: 'Training deleted successfully' });
-    } catch (error) {
-      res.status(500).json({ message: 'Error deleting training', error: error.message });
+  try {
+    const { id } = req.params;
+
+    const training = await Training.findById(id);
+    if (!training) {
+      return res.status(404).json({ message: 'Training not found' });
     }
-  };
+
+    // ✅ Delete video file if exists
+    if (training.videoPath) {
+      const oldVideoPath = path.join(__dirname, '..', training.videoPath);
+      if (fs.existsSync(oldVideoPath)) {
+        fs.unlinkSync(oldVideoPath);
+        console.log('Deleted video file:', oldVideoPath);
+      }
+    }
+
+    // ✅ Finally, delete training from DB
+    await Training.findByIdAndDelete(id);
+
+    res.status(200).json({ message: 'Training and associated video deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting training:', error);
+    res.status(500).json({ message: 'Error deleting training', error: error.message });
+  }
+};
   
 
   // Update a training by ID
