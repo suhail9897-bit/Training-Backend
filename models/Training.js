@@ -24,21 +24,29 @@ const trainingSchema = new mongoose.Schema({
           _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
           name: String,
           pageNo: Number,
+          videoStartTime: Number,  // 🆕 start time in seconds
+          videoEndTime: Number,
           subIndexes: [ // ✅ new added field for nested hierarchy
             {
               _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
               name: String,
               pageNo: Number,
+              videoStartTime: Number,  // 🆕 start time in seconds
+              videoEndTime: Number,
               subIndexes: [ // ✅ support further nested inside sub topic
                 {
                   _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
                   name: String,
                   pageNo: Number,
+                  videoStartTime: Number,  // 🆕 start time in seconds
+                  videoEndTime: Number,
                   subIndexes: [ // ✅ support further nested inside sub topic
                     {
                       _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
                       name: String,
-                      pageNo: Number
+                      pageNo: Number,
+                      videoStartTime: Number,  // 🆕 start time in seconds
+                      videoEndTime: Number,
                       
                     }
                   ]

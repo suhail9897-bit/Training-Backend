@@ -278,7 +278,11 @@ exports.addIndex = async (req, res) => {
     const chapter = training.chapters.id(chapterId);
     if (!chapter) return res.status(404).json({ message: 'Chapter not found' });
 
-    const newIndex = { _id: new mongoose.Types.ObjectId(), name, pageNo };
+    const newIndex = { _id: new mongoose.Types.ObjectId(), name, pageNo,
+      videoStartTime: req.body.videoStartTime || 0,   // NEW
+  videoEndTime: req.body.videoEndTime || 0,       // NEW
+  
+     };
     chapter.indexes.push(newIndex);
 
     await training.save();
@@ -306,6 +310,8 @@ exports.updateIndex = async (req, res) => {
 
     if (name) index.name = name;
     if (pageNo !== undefined) index.pageNo = pageNo;
+    if (req.body.videoStartTime !== undefined) index.videoStartTime = req.body.videoStartTime;  // fixed here
+    if (req.body.videoEndTime !== undefined) index.videoEndTime = req.body.videoEndTime;
 
     await training.save();
 
@@ -385,6 +391,8 @@ exports.addAnySubIndex = async (req, res) => {
             _id: new mongoose.Types.ObjectId(),
             name,
             pageNo,
+            videoStartTime: req.body.videoStartTime || 0,   // ✅ add this
+            videoEndTime: req.body.videoEndTime || 0, 
             subIndexes: []
           };
           if (!idx.subIndexes) idx.subIndexes = [];
@@ -435,6 +443,8 @@ exports.updateSubIndex = async (req, res) => {
         if (idx._id.toString() === subIndexId) {
           if (name) idx.name = name;
           if (pageNo !== undefined) idx.pageNo = pageNo;
+          if (req.body.videoStartTime !== undefined) idx.videoStartTime = req.body.videoStartTime;  
+if (req.body.videoEndTime !== undefined) idx.videoEndTime = req.body.videoEndTime;        
           updated = true;
           return true;
         }
