@@ -4,12 +4,17 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+const path = require('path');
 const app = express();
 app.use(express.json());
+
+const buildpath = path.join(__dirname,"dist")
+app.use(express.static(buildpath));
 app.use(cors());
 
 
-const path = require('path');
+
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
