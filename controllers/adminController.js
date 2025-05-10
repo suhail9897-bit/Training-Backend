@@ -32,7 +32,7 @@ exports.registerAdmin = async (req, res) => {
 };
 
 
-//admin login controller 
+
 // Admin Login
 exports.loginAdmin = async (req, res) => {
     try {
