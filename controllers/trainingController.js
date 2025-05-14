@@ -134,7 +134,7 @@ exports.deleteTraining = async (req, res) => {
 // ✅ Add new chapter controller
 exports.addChapter = async (req, res) => {
     try {
-      const { name, description, duration, dependentChapter, mandatory } = req.body; // 👈 mandatory extract kar liya
+      const { name, description, duration,  } = req.body; // 👈 mandatory extract kar liya
       const training = await Training.findById(req.params.id);
       if (!training) return res.status(404).json({ message: 'Training not found' });
   
@@ -142,9 +142,8 @@ exports.addChapter = async (req, res) => {
         name,
         description,
         duration,
-        dependentChapter,
         pdf: 'pdfs/' + req.file.filename, 
-        mandatory: mandatory === 'true'  // 👈 boolean me convert kiya
+        
       };
   
       training.chapters.push(newChapter);
@@ -174,7 +173,7 @@ exports.addChapter = async (req, res) => {
 exports.updateChapter = async (req, res) => {
   try {
     const { trainingId, chapterId } = req.params;
-    const { name, description, duration, dependentChapter, mandatory } = req.body;
+    const { name, description, duration, } = req.body;
 
     const training = await Training.findById(trainingId);
     if (!training) return res.status(404).json({ message: 'Training not found' });
@@ -185,8 +184,7 @@ exports.updateChapter = async (req, res) => {
     chapter.name = name || chapter.name;
     chapter.description = description || chapter.description;
     chapter.duration = duration || chapter.duration;
-    chapter.dependentChapter = dependentChapter || chapter.dependentChapter;
-    chapter.mandatory = mandatory !== undefined ? mandatory : chapter.mandatory;
+   
 
     await training.save();
 
@@ -535,6 +533,165 @@ exports.deleteSubIndex = async (req, res) => {
     res.status(500).json({ message: 'Error deleting subIndex', error: err.message });
   }
 };
+
+
+
+//test linked with chapter 
+exports.linkTestToChapter = async (req, res) => {
+  const { trainingId, chapterId } = req.params;
+  const { testId } = req.body;
+
+  try {
+    const training = await Training.findById(trainingId);
+
+    if (!training) {
+      return res.status(404).json({ message: "Training not found" });
+    }
+
+    const chapter = training.chapters.id(chapterId);
+
+    if (!chapter) {
+      return res.status(404).json({ message: "Chapter not found" });
+    }
+
+    chapter.linkedTestId = testId;
+    await training.save();
+
+    res.status(200).json({
+      message: "Test linked to chapter successfully",
+      chapter
+    });
+
+  } catch (err) {
+    console.error("Error linking test to chapter:", err);
+    res.status(500).json({
+      message: "Error linking test",
+      error: err.message
+    });
+  }
+};
+
+//test unlink controller
+exports.unlinkTestFromChapter = async (req, res) => {
+  const { trainingId, chapterId } = req.params;
+
+  try {
+    const training = await Training.findById(trainingId);
+    if (!training) return res.status(404).json({ message: "Training not found" });
+
+    const chapter = training.chapters.id(chapterId);
+    if (!chapter) return res.status(404).json({ message: "Chapter not found" });
+
+    chapter.linkedTestId = undefined; // 🔓 Unlinking
+    await training.save();
+
+    res.status(200).json({ message: "Test unlinked successfully", chapter });
+  } catch (err) {
+    console.error("Unlink error:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
+  }
+};
+
+
+// ✅ Set unlocksChapters for a chapter
+exports.setUnlocksForChapter = async (req, res) => {
+  const { trainingId, chapterId } = req.params;
+  const { unlocksChapters } = req.body;
+
+  try {
+    const training = await Training.findById(trainingId);
+
+    if (!training) return res.status(404).json({ message: "Training not found" });
+
+    const chapter = training.chapters.find(ch => ch._id.toString() === chapterId);
+    if (!chapter) return res.status(404).json({ message: "Chapter not found" });
+
+    // ✅ Set unlocksChapters
+    chapter.unlocksChapters = unlocksChapters;
+
+    // ✅ Now update dependentChapters of all chapters to be unlocked
+    unlocksChapters.forEach(unlockId => {
+      const target = training.chapters.find(ch => ch._id.toString() === unlockId);
+      if (target) {
+        if (!target.dependentChapters.includes(chapter._id)) {
+          target.dependentChapters.push(chapter._id);
+        }
+      }
+    });
+
+    await training.save();
+    res.status(200).json({ message: "Unlocks set successfully", chapter });
+  } catch (err) {
+    console.error("Error in setUnlocksForChapter:", err);
+    res.status(500).json({ message: "Error setting unlocks", error: err.message });
+  }
+};
+
+
+// ✅ Remove multiple unlocks from a chapter and their dependencies
+exports.removeUnlocksFromChapter = async (req, res) => {
+  const { trainingId, chapterId } = req.params;
+  const { removeChapterIds } = req.body; // array of chapters to remove from unlocks
+
+  try {
+    const training = await Training.findById(trainingId);
+    if (!training) return res.status(404).json({ message: "Training not found" });
+
+    const chapter = training.chapters.id(chapterId);
+    if (!chapter) return res.status(404).json({ message: "Chapter not found" });
+
+    // 1. Remove from current chapter's unlocksChapters array
+    chapter.unlocksChapters = chapter.unlocksChapters.filter(
+      (id) => !removeChapterIds.includes(id.toString())
+    );
+
+    // 2. Remove this chapter from the dependentChapters of the target chapters
+    removeChapterIds.forEach((targetId) => {
+      const target = training.chapters.id(targetId);
+      if (target) {
+        target.dependentChapters = target.dependentChapters.filter(
+          (depId) => depId.toString() !== chapterId
+        );
+      }
+    });
+
+    await training.save();
+    res.status(200).json({ message: "Unlocks and dependencies removed successfully", chapter });
+  } catch (err) {
+    console.error("Error in removeUnlocksFromChapter:", err);
+    res.status(500).json({ message: "Error removing unlocks", error: err.message });
+  }
+};
+
+
+
+// ✅ Get unlock chapters for a specific chapter
+exports.getUnlockChaptersOfChapter = async (req, res) => {
+  const { trainingId, chapterId } = req.params;
+
+  try {
+    const training = await Training.findById(trainingId);
+    if (!training) {
+      return res.status(404).json({ message: "Training not found" });
+    }
+
+    const chapter = training.chapters.find(ch => ch._id.toString() === chapterId);
+    if (!chapter) {
+      return res.status(404).json({ message: "Chapter not found" });
+    }
+
+    return res.status(200).json({
+      unlocksChapters: chapter.unlocksChapters || [],
+    });
+  } catch (err) {
+    console.error("Error in getUnlockChaptersOfChapter:", err);
+    return res.status(500).json({ message: "Error fetching unlocks", error: err.message });
+  }
+};
+
+
+
+
 
 
 

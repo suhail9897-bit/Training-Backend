@@ -15,9 +15,20 @@ const trainingSchema = new mongoose.Schema({
       name: String,
       description: String,
       duration: Number,
-      dependentChapter: String,
-      pdf: String, // ✅ uploaded PDF file path
-      mandatory: { type: Boolean, default: false }, 
+        pdf: String, // ✅ uploaded PDF file path
+        
+        linkedTestId: {    //linked test
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Test',
+        default: null
+      },
+
+      unlocksChapters: [
+        { type: mongoose.Schema.Types.ObjectId, ref: 'Chapter' }
+      ],
+      dependentChapters: [
+        { type: mongoose.Schema.Types.ObjectId, ref: 'Chapter' }
+      ],
 
       indexes: [
         {

@@ -7,13 +7,13 @@ const path = require('path');
 
 
 // ✅ multer config
+// Multer storage setup (same as you've written earlier)
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Check if file is a video
     if (file.mimetype.startsWith('video/')) {
-      cb(null, 'uploads/videos/');  // videos folder ke andar
+      cb(null, path.resolve(__dirname, '../uploads/videos')); // Adjust path as needed
     } else if (file.mimetype === 'application/pdf') {
-      cb(null, 'uploads/pdfs/');    // (optional) PDFs folder ke andar
+      cb(null, path.resolve(__dirname, '../uploads/pdfs'));
     } else {
       cb(new Error('Unsupported file type'), null);
     }
@@ -111,6 +111,51 @@ router.delete(
   verifyToken,
   trainingController.deleteSubIndex
 );
+
+
+//link test to a chapter
+router.put(
+  '/training/:trainingId/chapter/:chapterId/link-test',
+  verifyToken,
+  trainingController.linkTestToChapter
+);
+
+
+// Unlink test from a chapter
+router.put(
+  '/training/:trainingId/chapter/:chapterId/unlink-test',
+  verifyToken,
+ trainingController.unlinkTestFromChapter
+);
+
+
+//chapters unlock route
+router.put(
+  '/training/:trainingId/chapter/:chapterId/set-unlocks',
+  verifyToken,
+  trainingController.setUnlocksForChapter
+);
+
+
+//unlock chapter remove route
+router.put(
+  '/training/:trainingId/chapter/:chapterId/remove-unlocks',
+  verifyToken,
+  trainingController.removeUnlocksFromChapter
+);
+
+
+//get list of unlock chapters set for any chapter
+router.get(
+  '/training/:trainingId/chapter/:chapterId/unlocks',
+  verifyToken,
+  trainingController.getUnlockChaptersOfChapter
+);
+
+
+
+
+
 
 
 

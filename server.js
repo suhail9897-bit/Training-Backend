@@ -14,7 +14,7 @@ app.use(cors());
 
 
 
-
+//upload files in uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
@@ -26,6 +26,10 @@ app.use('/api/admin', adminRoutes);
 //training routes
 const trainingRoutes = require('./routes/trainingRoutes');
 app.use('/api/admin', trainingRoutes);
+
+//test routes
+const testRoutes = require('./routes/testRoutes');
+app.use('/api/admin', testRoutes);
 
 
 const PORT = 5000;
