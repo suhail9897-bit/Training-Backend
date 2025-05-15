@@ -1,5 +1,5 @@
 const express = require('express');
-const router = express.Router();
+const router = express.Router({ strict: false }); 
 const trainingController = require('../controllers/trainingController');
 const verifyToken = require('../middleware/auth'); 
 const multer = require('multer');
@@ -152,6 +152,13 @@ router.get(
   trainingController.getUnlockChaptersOfChapter
 );
 
+
+//reverse dependency and unlock array push route
+router.put(
+  '/training/:trainingId/chapter/:chapterId/dependent-on',
+  verifyToken,
+  trainingController.setReverseDependencies
+);
 
 
 

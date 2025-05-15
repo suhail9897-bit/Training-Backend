@@ -1,16 +1,22 @@
 const connectDB = require('./config/db');
-
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-
 const path = require('path');
+
+
 const app = express();
 app.use(express.json());
-
 const buildpath = path.join(__dirname,"dist")
 app.use(express.static(buildpath));
+
+// ✅ Serve frontend if not hitting API
+app.get(/^\/(?!api).*/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  });
 app.use(cors());
+
+
 
 
 
@@ -38,3 +44,6 @@ const PORT = 5000;
 connectDB();
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
+

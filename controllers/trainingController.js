@@ -134,7 +134,7 @@ exports.deleteTraining = async (req, res) => {
 // ✅ Add new chapter controller
 exports.addChapter = async (req, res) => {
     try {
-      const { name, description, duration,  } = req.body; // 👈 mandatory extract kar liya
+      const { name, description, duration,  } = req.body; 
       const training = await Training.findById(req.params.id);
       if (!training) return res.status(404).json({ message: 'Training not found' });
   
@@ -148,8 +148,10 @@ exports.addChapter = async (req, res) => {
   
       training.chapters.push(newChapter);
       await training.save();
+
+      const lastChapter = training.chapters[training.chapters.length - 1];   //testing
   
-      res.status(200).json({ message: 'Chapter added', chapter: newChapter });
+      res.status(200).json({ message: 'Chapter added', chapter: lastChapter });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
@@ -690,9 +692,46 @@ exports.getUnlockChaptersOfChapter = async (req, res) => {
 };
 
 
+//reverse dependency set and push into unlock chapters
+exports.setReverseDependencies = async (req, res) => {
+  const { trainingId, chapterId } = req.params;
+  const { dependencyChapterIds } = req.body;
 
+  try {
+    const training = await Training.findById(trainingId);
+    if (!training) return res.status(404).json({ message: 'Training not found' });
 
+    const currentChapter = training.chapters.find(ch => ch._id.toString() === chapterId);
+    if (!currentChapter) return res.status(404).json({ message: 'Target chapter not found' });
 
+    // ✅ Validation: ensure all dependencies have test linked
+    for (const depId of dependencyChapterIds) {
+      const depChapter = training.chapters.find(ch => ch._id.toString() === depId);
+      if (!depChapter?.linkedTestId) {
+        return res.status(400).json({
+          message: `Cannot set dependency on Chapter '${depChapter?.name || depId}' — test not linked.`,
+        });
+      }
+    }
+
+    // ✅ Set dependencies
+    currentChapter.dependentChapters = dependencyChapterIds;
+
+    // ✅ Push chapterId to unlocksChapters of dependency chapters
+    for (const depId of dependencyChapterIds) {
+      const depChapter = training.chapters.find(ch => ch._id.toString() === depId);
+      if (depChapter && !depChapter.unlocksChapters.includes(chapterId)) {
+        depChapter.unlocksChapters.push(chapterId);
+      }
+    }
+
+    await training.save();
+    res.status(200).json({ message: 'Dependencies set successfully' });
+  } catch (err) {
+    console.error('Dependency error:', err);
+    res.status(500).json({ message: 'Server error while setting dependencies' });
+  }
+};
 
 
 
