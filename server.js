@@ -6,22 +6,22 @@ const path = require('path');
 
 
 const app = express();
+app.use(cors());
 app.use(express.json());
+
+//upload files in uploads folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 const buildpath = path.join(__dirname,"dist")
 app.use(express.static(buildpath));
+
+
+
 
 // ✅ Serve frontend if not hitting API
 app.get(/^\/(?!api).*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
   });
-app.use(cors());
-
-
-
-
-
-//upload files in uploads folder
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 // admin routes

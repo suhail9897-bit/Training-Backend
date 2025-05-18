@@ -99,13 +99,14 @@ exports.deleteTraining = async (req, res) => {
       let videoPath = existingTraining.videoPath;
       let videoFilename = existingTraining.videoFilename;
   
-      // If new video provided
-      if (req.file) {
-        // Delete old video file
+      // ✅ Only delete old video if a valid new file is uploaded
+      if (req.file && req.file.filename) {
+        // Safely delete old video file
         if (existingTraining.videoPath) {
           const oldVideoPath = path.join(__dirname, '..', existingTraining.videoPath);
           if (fs.existsSync(oldVideoPath)) {
             fs.unlinkSync(oldVideoPath);
+            console.log('✅ Deleted old video file:', oldVideoPath);
           }
         }
   
@@ -114,22 +115,23 @@ exports.deleteTraining = async (req, res) => {
         videoFilename = req.file.originalname;
       }
   
-      // Update training
-      const updatedTraining = await Training.findByIdAndUpdate(
-        id,
-        {
-          ...req.body,
-          videoPath,
-          videoFilename
-        },
-        { new: true }
-      );
-  
-      res.status(200).json(updatedTraining);
-    } catch (error) {
-      res.status(500).json({ message: 'Error updating training', error: error.message });
-    }
-  };
+     // Proceed to update training
+     const updatedTraining = await Training.findByIdAndUpdate(
+      id,
+      {
+        ...req.body,
+        videoPath,
+        videoFilename,
+      },
+      { new: true }
+    );
+
+    res.status(200).json(updatedTraining);
+  } catch (error) {
+    console.error('Error in updateTraining:', error);
+    res.status(500).json({ message: 'Error updating training', error: error.message });
+  }
+};
 
 // ✅ Add new chapter controller
 exports.addChapter = async (req, res) => {
